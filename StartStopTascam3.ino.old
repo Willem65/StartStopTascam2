@@ -1,0 +1,64 @@
+#include <Arduino.h>
+#include <SoftwareSerial.h>
+
+// Set up a new SoftwareSerial object with RX in digital pin 10 and TX in digital pin 11
+SoftwareSerial mySerial(10, 11);
+
+unsigned int inPinCDstop = 16;
+unsigned int inPinCDplay = 17;
+unsigned int inPinMDplay = 15;
+unsigned int inPinMDstop = 14;
+unsigned int debounce = 200;
+
+unsigned char Stop_CD[] = {0x0A, 0x31, 0x31, 0x30, 0x0D};
+unsigned char Play_CD[] = {0x0A, 0x31, 0x31, 0x32, 0x0D};
+unsigned char Stop_MD[] = {0x0A, 0x30, 0x31, 0x30, 0x0D};
+unsigned char Play_MD[] = {0x0A, 0x30, 0x31, 0x32, 0x0D};
+
+
+void setup() 
+{
+    pinMode(inPinCDstop, INPUT);
+    digitalWrite(inPinCDstop, HIGH);    
+    pinMode(inPinCDplay, INPUT);
+    digitalWrite(inPinCDplay, HIGH);    
+    pinMode(inPinMDplay, INPUT);
+    digitalWrite(inPinMDplay, HIGH);   
+    pinMode(inPinMDstop, INPUT);
+    digitalWrite(inPinMDstop, HIGH);       
+    mySerial.begin(9600);    
+}
+
+void send_sequens(unsigned char arr[], unsigned int lengt)
+{
+    unsigned int t;
+    
+    for(t=0; t<lengt; t++)
+    {
+      mySerial.write(arr[t]);
+    }
+}
+
+void loop() 
+{    
+    if(!(digitalRead(inPinCDstop)))
+    { 
+      send_sequens(Stop_CD, sizeof(Stop_CD));
+      delay(debounce);
+    }    
+    else if(!(digitalRead(inPinCDplay)))
+    {
+      send_sequens(Play_CD, sizeof(Play_CD));
+      delay(debounce);
+    }    
+    else if(!(digitalRead(inPinMDstop)))
+    {
+      send_sequens(Stop_MD, sizeof(Stop_MD));
+      delay(200);
+    }
+    else if(!(digitalRead(inPinMDplay)))
+    {
+      send_sequens(Play_MD, sizeof(Play_MD));
+      delay(debounce);
+    }         
+}

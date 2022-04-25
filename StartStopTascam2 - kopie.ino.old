@@ -1,0 +1,73 @@
+#include <Arduino.h>
+#include <SoftwareSerial.h>
+
+// Set up a new SoftwareSerial object with RX in digital pin 10 and TX in digital pin 11
+SoftwareSerial mySerial(10, 11);
+int inPinCDstop = 16;
+int inPinCDplay = 17;
+int inPinMDplay = 15;
+int inPinMDstop = 14;
+unsigned int vlag = 0;
+
+
+void setup() 
+{
+    pinMode(inPinCDstop, INPUT);
+    digitalWrite(inPinCDstop, HIGH);    
+    pinMode(inPinCDplay, INPUT);
+    digitalWrite(inPinCDplay, HIGH);    
+    pinMode(inPinMDplay, INPUT);
+    digitalWrite(inPinMDplay, HIGH);   
+    pinMode(inPinMDstop, INPUT);
+    digitalWrite(inPinMDstop, HIGH);       
+    mySerial.begin(9600);    
+}
+
+void loop() 
+{    
+    if(!(digitalRead(inPinCDstop)))
+    {
+      //Stop CD
+      mySerial.write(0x0A);
+      mySerial.write(0x31);
+      mySerial.write(0x31);
+      mySerial.write(0x30);
+      mySerial.write(0x0D);
+      vlag=1;
+    }
+    else if(!(digitalRead(inPinCDplay)))
+    {
+      //Play CD
+      mySerial.write(0x0A);
+      mySerial.write(0x31);
+      mySerial.write(0x31);
+      mySerial.write(0x32);
+      mySerial.write(0x0D);
+      vlag=1;
+    }
+    else if(!(digitalRead(inPinMDstop)))
+    {
+      //Stop MD
+      mySerial.write(0x0A);
+      mySerial.write(0x30);
+      mySerial.write(0x31);
+      mySerial.write(0x30);
+      mySerial.write(0x0D);
+      vlag=1;
+    }
+    else if(!(digitalRead(inPinMDplay)))
+    {
+      //Play MD
+      mySerial.write(0x0A);
+      mySerial.write(0x30);
+      mySerial.write(0x31);
+      mySerial.write(0x32);
+      mySerial.write(0x0D);
+      vlag=1;
+    }        
+    if(vlag)
+    {
+      vlag=0;
+      delay(200);
+    }  
+}
