@@ -197,13 +197,10 @@ unsigned int inPin_MD = 16;
 unsigned int inPin_CD = 14;
 unsigned int debounce = 200;
 
-
 #define Play_CD 1
 #define Stop_CD 2
 #define Play_MD 3
 #define Stop_MD 4
-
-void GPio(unsigned int io );
 
 int vlag=0;
 int vlag2=0;
@@ -216,7 +213,7 @@ void setup() {
     mySerial.begin(9600);    
 }
 
-typedef struct CMD_STRUCT 
+struct CMD_STRUCT 
 {
   unsigned char BEGIN=0x0A;
   unsigned char END=0x0D;
@@ -224,9 +221,9 @@ typedef struct CMD_STRUCT
   unsigned char MD=0x31;
   unsigned char STOPCOMMAND[2]= {0x31, 0x30};
   unsigned char PLAYCOMMAND[2]= {0x31, 0x32};
-}Command;
+};
 
-Command packet;
+struct CMD_STRUCT packet;
 
 void GPio(unsigned int io) 
 {  
