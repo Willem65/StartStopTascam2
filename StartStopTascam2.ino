@@ -193,10 +193,8 @@
 // Set up a new SoftwareSerial object with RX in digital pin 10 and TX in digital pin 11
 SoftwareSerial mySerial(10, 11);
 
-
 unsigned int inPin_MD = 16;
 unsigned int inPin_CD = 14;
-
 unsigned int debounce = 200;
 
 
@@ -206,13 +204,6 @@ unsigned int debounce = 200;
 #define Stop_MD 4
 
 void GPio(unsigned int io );
-//void GPio();
-
-// Send sequens opbouw
-//unsigned char Stop_CD[] = {BEGIN, CD, 0x31, 0x30, END};
-//unsigned char Play_CD[] = {BEGIN, CD, 0x31, 0x32, END};
-//unsigned char Stop_MD[] = {BEGIN, MD, 0x31, 0x30, END};
-//unsigned char Play_MD[] = {BEGIN, MD, 0x31, 0x32, END};
 
 int vlag=0;
 int vlag2=0;
@@ -222,20 +213,9 @@ void setup() {
     digitalWrite(inPin_MD, HIGH);       
     pinMode(inPin_CD, INPUT);
     digitalWrite(inPin_CD, HIGH);       
-    mySerial.begin(9600); 
-    //GPio("Play_CD");  
+    mySerial.begin(9600);  
     GPio(1);  
 }
-
-
-//enum CMD_ID  // Een lijst van constanten
-//{
-//  unsigned char BEGIN;
-//  unsigned char END;
-//  unsigned char CD;
-//  unsigned char MD;
-//};
-
 
 typedef struct CMD_STRUCT 
 {
@@ -251,9 +231,8 @@ Command packet;
 
 void GPio(unsigned int io) 
 {  
-  
-    switch(io)
-    {
+  switch(io)
+  {
     case(1):
         {
           unsigned char buf[]={packet.BEGIN, packet.CD, packet.PLAYCOMMAND[0], packet.PLAYCOMMAND[1], packet.END};          
@@ -281,28 +260,28 @@ void GPio(unsigned int io)
     }       
 }
 
-
-void loop() {   
-  
-    //Voor de CD 
-    if(!(digitalRead(inPin_CD)) && vlag==0 ) { 
+void loop() 
+{    
+    if(!(digitalRead(inPin_CD)) && vlag==0 ) 
+    { 
       vlag=1;
       GPio(Stop_CD);
       delay(debounce);
     }     
-    else if(digitalRead(inPin_CD) && vlag==1 ) {
+    else if(digitalRead(inPin_CD) && vlag==1 ) 
+    {
       vlag=0;
       GPio(Play_CD);
       delay(debounce);
-    }
-    
-    // Voor de MD    
-    else if(!(digitalRead(inPin_MD)) && vlag2==0 ) { 
+    }      
+    else if(!(digitalRead(inPin_MD)) && vlag2==0 ) 
+    { 
       vlag2=1;
       GPio(Stop_MD);
       delay(debounce);
     }     
-    else if(digitalRead(inPin_MD) && vlag2==1 ) {
+    else if(digitalRead(inPin_MD) && vlag2==1 ) 
+    {
       vlag2=0;
       GPio(Play_MD);
       delay(debounce);
