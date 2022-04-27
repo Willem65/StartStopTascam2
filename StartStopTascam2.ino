@@ -177,13 +177,13 @@
 //  OAh 32h      32h 39h     32h 33h 30h 31h      54h 65h 73h 74h      ODh
 //  
 //  3.2. Machine ID
-//  For this device, Machine lD=1 for commands and returns on MD and Machine lD=2 for commands and
+//  For this device, Machine ID=1 for commands and returns on MD
+//  and Machine ID=2 for commands and
 //  returns on CD are assigned.
-//  Commands and returns with Machine lD=0 exist, and theses operations are described in context.
-//  If a command with Machine lD=3 or more is received, it is ignored.
+//  Commands and returns with Machine ID=0 exist, and theses operations are described in context.
+//  If a command with Machine ID=3 or more is received, it is ignored.
 //  If a command with illegal Machine ID is received (MD receives a command with CD’s ID, or other cases),
 //  this device sends ILLEGAL [F2].
-//  3 TEAC Corporation
 
 
 
@@ -193,17 +193,20 @@
 // Set up a new SoftwareSerial object with RX in digital pin 10 and TX in digital pin 11
 SoftwareSerial mySerial(10, 11);
 
-unsigned int inPinCDstop = 16;
-unsigned int inPinCDplay = 17;
-unsigned int inPinMDplay = 15;
-unsigned int inPinMDstop = 14;
+
+unsigned int inPin_MD = 16;
+unsigned int inPin_CD = 14;
+
 unsigned int debounce = 200;
 
 #define BEGIN 0x0A
 #define END 0x0D
-#define CD 0x31
-#define MD 0x30
+#define CD 0x32
+#define MD 0x31
 
+void send_sequens(unsigned char arr[], unsigned int lengt);
+//void GPio(unsigned char pio[] );
+void GPio();
 // Send sequens opbouw
 
 unsigned char Stop_CD[] = {BEGIN, CD, 0x31, 0x30, END};
@@ -212,70 +215,91 @@ unsigned char Stop_MD[] = {BEGIN, MD, 0x31, 0x30, END};
 unsigned char Play_MD[] = {BEGIN, MD, 0x31, 0x32, END};
 
 
-void setup() 
-{
-    pinMode(inPinCDstop, INPUT);
-    digitalWrite(inPinCDstop, HIGH);    
-    pinMode(inPinCDplay, INPUT);
-    digitalWrite(inPinCDplay, HIGH);    
-    pinMode(inPinMDplay, INPUT);
-    digitalWrite(inPinMDplay, HIGH);   
-    pinMode(inPinMDstop, INPUT);
-    digitalWrite(inPinMDstop, HIGH);       
-    mySerial.begin(9600);    
-}
+int vlag=0;
+int vlag2=0;
 
+
+
+void setup() {
+    pinMode(inPin_MD, INPUT);
+    digitalWrite(inPin_MD, HIGH);       
+    pinMode(inPin_CD, INPUT);
+    digitalWrite(inPin_CD, HIGH);       
+    mySerial.begin(9600); 
+    //GPio("Play_CD");  
+    GPio();  
+}
 
 
 //enum CMD_ID  // Een lijst van constanten
 //{
-//  HEADER_BEGIN=0x0A,
-//  HEADER_END =0x0D,
-//  ID_CD=0x31,
-//  ID_MD=0x30
+//  unsigned char BEGIN;
+//  unsigned char END;
+//  unsigned char CD;
+//  unsigned char MD;
 //};
 
 
-//
-//struct CMD_STRUCT
-//{
-//  CMD_ID StartIdStop;
-//  unsigned char stopCommand[2]= {0x31, 0x30};
-//  unsigned char playCommand[2]= {0x31, 0x32};
-//};
-
-
-
-void send_sequens(unsigned char arr[], unsigned int lengt)
+typedef struct CMD_STRUCT 
 {
+  unsigned char dev_begin='\r';
+  unsigned char dev_end='\n';
+  unsigned char dev_cd=0x32;
+  unsigned char dev_md=0x31;
+  unsigned char stopCommand[2]= {0x31, 0x30};
+  unsigned char playCommand[2]= {0x31, 0x32};
+}Command;
+Command command;
+
+
+void GPio() 
+{  
+    unsigned int t;
+
+    mySerial.write(command.dev_begin);
+    mySerial.write(command.dev_cd);
+  
+    for(t=0; t<sizeof(sendCommand); t++)
+    {
+      mySerial.write(command.playCommand[t]);
+    }
+    
+    mySerial.write(command.dev_end);    
+}
+
+
+void send_sequens(unsigned char arr[], unsigned int lengt) {
     unsigned int t;
     
-    for(t=0; t<lengt; t++)
-    {
+    for(t=0; t<lengt; t++) {
       mySerial.write(arr[t]);
     }
 }
 
-void loop() 
-{    
-    if(!(digitalRead(inPinCDstop)))
-    { 
-      send_sequens(Stop_CD, sizeof(Stop_CD));
-      delay(debounce);
-    }    
-    else if(!(digitalRead(inPinCDplay)))
-    {
-      send_sequens(Play_CD, sizeof(Play_CD));
-      delay(debounce);
-    }    
-    else if(!(digitalRead(inPinMDstop)))
-    {
+
+void loop() {   
+  
+    // Voor de CD 
+//    if(!(digitalRead(inPin_CD)) && vlag==0 ) { 
+//      vlag=1;
+//      GPio("Stop_CD");
+//      delay(debounce);
+//    }     
+//    else if(digitalRead(inPin_CD) && vlag==1 ) {
+//      vlag=0;
+//      GPio("Play_CD");
+//      delay(debounce);
+//    }
+    
+    // Voor de MD    
+     if(!(digitalRead(inPin_MD)) && vlag2==0 ) { 
+      vlag2=1;
       send_sequens(Stop_MD, sizeof(Stop_MD));
       delay(debounce);
-    }
-    else if(!(digitalRead(inPinMDplay)))
-    {
-      send_sequens(Play_MD, sizeof(Play_MD));
+    }     
+    else if(digitalRead(inPin_MD) && vlag2==1 ) {
+      vlag2=0;
+      send_sequens(Play_MD, sizeof(Stop_MD));
       delay(debounce);
     }         
 }
