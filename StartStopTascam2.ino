@@ -213,8 +213,7 @@ void setup() {
     digitalWrite(inPin_MD, HIGH);       
     pinMode(inPin_CD, INPUT);
     digitalWrite(inPin_CD, HIGH);       
-    mySerial.begin(9600);  
-    GPio(1);  
+    mySerial.begin(9600);    
 }
 
 typedef struct CMD_STRUCT 
