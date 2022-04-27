@@ -185,7 +185,7 @@
 //  If a command with illegal Machine ID is received (MD receives a command with CD’s ID, or other cases),
 //  this device sends ILLEGAL [F2].
 
-
+//---------------------------------------------------------------------------------------------------------------
 
 #include <Arduino.h>
 #include <SoftwareSerial.h>
@@ -199,28 +199,23 @@ unsigned int inPin_CD = 14;
 
 unsigned int debounce = 200;
 
-#define BEGIN 0x0A
-#define END 0x0D
-#define CD 0x32
-#define MD 0x31
-#define Play_CDD 1
-#define Stop_CDD 2
 
-void send_sequens(unsigned char arr[], unsigned int lengt);
+#define Play_CD 1
+#define Stop_CD 2
+#define Play_MD 3
+#define Stop_MD 4
+
 void GPio(unsigned int io );
 //void GPio();
+
 // Send sequens opbouw
-
-unsigned char Stop_CD[] = {BEGIN, CD, 0x31, 0x30, END};
-unsigned char Play_CD[] = {BEGIN, CD, 0x31, 0x32, END};
-unsigned char Stop_MD[] = {BEGIN, MD, 0x31, 0x30, END};
-unsigned char Play_MD[] = {BEGIN, MD, 0x31, 0x32, END};
-
+//unsigned char Stop_CD[] = {BEGIN, CD, 0x31, 0x30, END};
+//unsigned char Play_CD[] = {BEGIN, CD, 0x31, 0x32, END};
+//unsigned char Stop_MD[] = {BEGIN, MD, 0x31, 0x30, END};
+//unsigned char Play_MD[] = {BEGIN, MD, 0x31, 0x32, END};
 
 int vlag=0;
 int vlag2=0;
-
-
 
 void setup() {
     pinMode(inPin_MD, INPUT);
@@ -244,54 +239,46 @@ void setup() {
 
 typedef struct CMD_STRUCT 
 {
-  unsigned char dev_begin=0x0A;
-  unsigned char dev_end=0x0D;
-  unsigned char dev_cd=0x32;
-  unsigned char dev_md=0x31;
-  unsigned char stopCommand[2]= {0x31, 0x30};
-  unsigned char playCommand[2]= {0x31, 0x32};
+  unsigned char BEGIN=0x0A;
+  unsigned char END=0x0D;
+  unsigned char CD=0x32;
+  unsigned char MD=0x31;
+  unsigned char STOPCOMMAND[2]= {0x31, 0x30};
+  unsigned char PLAYCOMMAND[2]= {0x31, 0x32};
 }Command;
-Command command;
 
+Command packet;
 
 void GPio(unsigned int io) 
 {  
-    unsigned int t;
-
-      switch(io)
-      {
-      case(1):
-          mySerial.write(command.dev_begin);
-          mySerial.write(command.dev_cd);
-        
-          for(t=0; t<sizeof(command.playCommand); t++)
-          {
-            mySerial.write(command.playCommand[t]);
-          }
-          mySerial.write(command.dev_end); 
-          break;
-        
-      case(2):
-          mySerial.write(command.dev_begin);
-          mySerial.write(command.dev_cd);
-        
-          for(t=0; t<sizeof(command.stopCommand); t++)
-          {
-            mySerial.write(command.stopCommand[t]);
-          }
-          mySerial.write(command.dev_end); 
-          break;
-      }
-      
-}
-
-
-void send_sequens(unsigned char arr[], unsigned int lengt) {
-    unsigned int t;
-    
-    for(t=0; t<lengt; t++) {
-      mySerial.write(arr[t]);
-    }
+  
+    switch(io)
+    {
+    case(1):
+        {
+          unsigned char buf[]={packet.BEGIN, packet.CD, packet.PLAYCOMMAND[0], packet.PLAYCOMMAND[1], packet.END};          
+          mySerial.write(buf, sizeof(buf));
+        }
+        break;        
+    case(2):
+        {
+          unsigned char buf2[]={packet.BEGIN, packet.CD, packet.STOPCOMMAND[0], packet.STOPCOMMAND[1], packet.END};          
+          mySerial.write(buf2, sizeof(buf2));
+        }
+        break; 
+    case(3):
+        {
+          unsigned char buf3[]={packet.BEGIN, packet.MD, packet.PLAYCOMMAND[0], packet.PLAYCOMMAND[1], packet.END};          
+          mySerial.write(buf3, sizeof(buf3));
+        }
+        break;        
+    case(4):
+        {
+          unsigned char buf4[]={packet.BEGIN, packet.MD, packet.STOPCOMMAND[0], packet.STOPCOMMAND[1], packet.END};          
+          mySerial.write(buf4, sizeof(buf4));
+        }
+        break;
+    }       
 }
 
 
@@ -300,24 +287,24 @@ void loop() {
     //Voor de CD 
     if(!(digitalRead(inPin_CD)) && vlag==0 ) { 
       vlag=1;
-      GPio(Stop_CDD);
+      GPio(Stop_CD);
       delay(debounce);
     }     
     else if(digitalRead(inPin_CD) && vlag==1 ) {
       vlag=0;
-      GPio(Play_CDD);
+      GPio(Play_CD);
       delay(debounce);
     }
     
     // Voor de MD    
-     if(!(digitalRead(inPin_MD)) && vlag2==0 ) { 
+    else if(!(digitalRead(inPin_MD)) && vlag2==0 ) { 
       vlag2=1;
-      send_sequens(Stop_MD, sizeof(Stop_MD));
+      GPio(Stop_MD);
       delay(debounce);
     }     
     else if(digitalRead(inPin_MD) && vlag2==1 ) {
       vlag2=0;
-      send_sequens(Play_MD, sizeof(Stop_MD));
+      GPio(Play_MD);
       delay(debounce);
     }         
 }
