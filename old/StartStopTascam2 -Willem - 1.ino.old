@@ -2,7 +2,7 @@
 #include <SoftwareSerial.h>
 
 // Set up a new SoftwareSerial object with RX in digital pin 10 and TX in digital pin 11
-SoftwareSerial mySerial(10, 11);
+SoftwareSerial mySerial(4, 3);
 int inPinCDstop = 16;
 int inPinCDplay = 17;
 int inPinMDplay = 15;

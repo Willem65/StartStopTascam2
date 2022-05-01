@@ -191,111 +191,98 @@
 #include <SoftwareSerial.h>
 
 // Set up a new SoftwareSerial object with RX in digital pin 10 and TX in digital pin 11
-//SoftwareSerial mySerial(10, 11);
+SoftwareSerial mySerial(10, 11);
 
-SoftwareSerial mySerial(4, 3);
+unsigned int inPin_MD = 16;
+unsigned int inPin_CD = 14;
+unsigned int debounce = 200;
 
-unsigned int PIN_MD = 16;
-unsigned int PIN_CD = 14;
-unsigned int PIN_LED = 2;
-unsigned int debounce = 50;
+#define Play_CD 1
+#define Stop_CD 2
+#define Play_MD 3
+#define Stop_MD 4
 
-// functions
-#define FN_PLAY_CD   0
-#define FN_STOP_CD   1
-#define FN_PLAY_MD   2
-#define FN_STOP_MD   3
-
-#define BEGIN     0x0A
-#define END       0x0D
-
-#define ID_CD     0x32
-#define ID_MD     0x31
-
-#define CMD_STOP  "10"
-#define CMD_PLAY  "12"
-
-int PIN_MD_Prev = 0;
-int PIN_CD_Prev = 0;
-int PIN_MD_Curr = 0;
-int PIN_CD_Curr = 0;
-
-struct CMD_STRUCT 
-{
-  unsigned char id;
-  unsigned char cmd[2];
-};
-
-// global variable
-struct CMD_STRUCT cmds[4] = {
-  {ID_CD, CMD_PLAY[0], CMD_PLAY[1]},  // FN_PLAY_CD
-  {ID_CD, CMD_STOP[0], CMD_STOP[1]},  // FN_STOP_CD
-  {ID_MD, CMD_PLAY[0], CMD_PLAY[1]},  // FN_PLAY_MD
-  {ID_MD, CMD_STOP[0], CMD_STOP[1]}   // FN_STOP_MD
-};
-
+int vlag=0;
+int vlag2=0;
 
 void setup() {
-    pinMode(PIN_MD, INPUT);
-    digitalWrite(PIN_MD, HIGH);       
-    pinMode(PIN_CD, INPUT);
-    digitalWrite(PIN_CD, HIGH);
-    pinMode(PIN_LED, OUTPUT);
-    digitalWrite(PIN_LED, HIGH);           
+    pinMode(inPin_MD, INPUT);
+    digitalWrite(inPin_MD, HIGH);       
+    pinMode(inPin_CD, INPUT);
+    digitalWrite(inPin_CD, HIGH);       
     mySerial.begin(9600);    
 }
 
-void do_function( int functionNr )
+
+struct CMD_STRUCT 
 {
-    struct CMD_STRUCT fn = cmds[functionNr];
-    unsigned char tmp;
-    
-    // begin
-    tmp = BEGIN;
-    mySerial.write(&tmp, 1);
-    // send id
-    mySerial.write(&fn.id, 1);
-    // send cmd
-    mySerial.write(fn.cmd, 2);
-    // end
-    tmp = END;
-    mySerial.write(&tmp, 1);
+  unsigned char BEGIN=0x0A;
+  unsigned char END=0x0D;
+  unsigned char CD=0x32;
+  unsigned char MD=0x31;
+  unsigned char STOPCOMMAND[2]= {0x31, 0x30};
+  unsigned char PLAYCOMMAND[2]= {0x31, 0x32};
+};
+
+
+
+struct CMD_STRUCT packet;
+
+void GPio(unsigned int io) 
+{  
+  switch(io)
+  {
+    case(1):
+        {
+          unsigned char buf[]={packet.BEGIN, packet.CD, packet.PLAYCOMMAND[0], packet.PLAYCOMMAND[1], packet.END};          
+          mySerial.write(buf, sizeof(buf));
+        }
+        break;        
+    case(2):
+        {
+          unsigned char buf2[]={packet.BEGIN, packet.CD, packet.STOPCOMMAND[0], packet.STOPCOMMAND[1], packet.END};          
+          mySerial.write(buf2, sizeof(buf2));
+        }
+        break; 
+    case(3):
+        {
+          unsigned char buf3[]={packet.BEGIN, packet.MD, packet.PLAYCOMMAND[0], packet.PLAYCOMMAND[1], packet.END};          
+          mySerial.write(buf3, sizeof(buf3));
+        }
+        break;        
+    case(4):
+        {
+          unsigned char buf4[]={packet.BEGIN, packet.MD, packet.STOPCOMMAND[0], packet.STOPCOMMAND[1], packet.END};          
+          mySerial.write(buf4, sizeof(buf4));
+        }
+        break;
+    }       
 }
 
 void loop() 
 {    
-    // Handle CD Player
-    PIN_CD_Curr = digitalRead(PIN_CD);
-
-    if (PIN_CD_Curr != PIN_CD_Prev) {
-        if (PIN_CD_Curr) {
-            // pin high
-            do_function( FN_STOP_CD );
-            digitalWrite(PIN_LED, HIGH);
-        }else {
-            // pin low
-            do_function( FN_PLAY_CD );
-            digitalWrite(PIN_LED, LOW);
-        }
-        PIN_CD_Prev = PIN_CD_Curr;
-    }
-    
-
-    // Handle MD Player
-    PIN_MD_Curr = digitalRead(PIN_MD);
-
-    if (PIN_MD_Curr != PIN_MD_Prev) {
-        if (PIN_MD_Curr) {
-            // pin high
-            digitalWrite(PIN_LED, HIGH);
-            do_function( FN_STOP_MD );
-        }else {
-            // pin low
-            do_function( FN_PLAY_MD );
-            digitalWrite(PIN_LED, LOW);
-        }
-        PIN_MD_Prev = PIN_MD_Curr;
-    }
-
-    delay(debounce);     
+    if(!(digitalRead(inPin_CD)) && vlag==0 ) 
+    { 
+      vlag=1;
+      GPio(Stop_CD);
+      delay(debounce);
+    }     
+    else if(digitalRead(inPin_CD) && vlag==1 ) 
+    {
+      vlag=0;
+      GPio(Play_CD);
+      delay(debounce);
+    }      
+    else if(!(digitalRead(inPin_MD)) && vlag2==0 ) 
+    { 
+      vlag2=1;
+      GPio(Stop_MD);
+      delay(debounce);
+    }     
+    else if(digitalRead(inPin_MD) && vlag2==1 ) 
+    {
+      vlag2=0;
+      GPio(Play_MD);
+      delay(debounce);
+    }         
 }

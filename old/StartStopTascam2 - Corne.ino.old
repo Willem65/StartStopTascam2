@@ -191,14 +191,11 @@
 #include <SoftwareSerial.h>
 
 // Set up a new SoftwareSerial object with RX in digital pin 10 and TX in digital pin 11
-//SoftwareSerial mySerial(10, 11);
-
-SoftwareSerial mySerial(4, 3);
+SoftwareSerial mySerial(10, 11);
 
 unsigned int PIN_MD = 16;
 unsigned int PIN_CD = 14;
-unsigned int PIN_LED = 2;
-unsigned int debounce = 50;
+unsigned int debounce = 200;
 
 // functions
 #define FN_PLAY_CD   0
@@ -239,9 +236,7 @@ void setup() {
     pinMode(PIN_MD, INPUT);
     digitalWrite(PIN_MD, HIGH);       
     pinMode(PIN_CD, INPUT);
-    digitalWrite(PIN_CD, HIGH);
-    pinMode(PIN_LED, OUTPUT);
-    digitalWrite(PIN_LED, HIGH);           
+    digitalWrite(PIN_CD, HIGH);       
     mySerial.begin(9600);    
 }
 
@@ -271,11 +266,9 @@ void loop()
         if (PIN_CD_Curr) {
             // pin high
             do_function( FN_STOP_CD );
-            digitalWrite(PIN_LED, HIGH);
         }else {
             // pin low
             do_function( FN_PLAY_CD );
-            digitalWrite(PIN_LED, LOW);
         }
         PIN_CD_Prev = PIN_CD_Curr;
     }
@@ -287,12 +280,10 @@ void loop()
     if (PIN_MD_Curr != PIN_MD_Prev) {
         if (PIN_MD_Curr) {
             // pin high
-            digitalWrite(PIN_LED, HIGH);
             do_function( FN_STOP_MD );
         }else {
             // pin low
             do_function( FN_PLAY_MD );
-            digitalWrite(PIN_LED, LOW);
         }
         PIN_MD_Prev = PIN_MD_Curr;
     }
